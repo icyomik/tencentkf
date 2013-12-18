@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="gb2312"?>
-<project ver="0.60" name="腾讯客服平台" libEmbed="true" icon="mix\icon.ico" CompanyName="" FileDescription="BY 长进" LegalCopyright="" ProductName="" InternalName="" FileVersion="0.0.1.3" ProductVersion="0.0.1.3" publishDir="\Publish\" ui="win" output="腾讯客服平台.exe">
-	<file name="main.aau" path="main.aau" comment="main.aau"/>
+<project ver="0.60" name="腾讯客服平台" libEmbed="true" icon="mix\icon.ico" CompanyName="" FileDescription="CODE BY JTWO" LegalCopyright="" ProductName="" InternalName="" FileVersion="1.0.1.30" ProductVersion="1.0.1.30" publishDir="/Publish/" ui="win" output="腾讯客服平台.exe">
+	<file name="main.aau" path="main.aau"/>
 	<folder name="资源文件" path="res" embed="true">
 		<file name="qqlogin.aau" path="res\qqlogin.aau" comment="res\qqlogin.aau"/>
-		<file name="essay.lst" path="res\essay.lst" comment="res\essay.lst"/>
-		<file name="config.ini" path="res\config.ini" comment="res\config.ini"/>
+		<file name="initialize.aau" path="res\initialize.aau" comment="res\initialize.aau"/>
+		<file name="debug.aau" path="res\debug.aau" comment="res\debug.aau"/>
+	</folder>
+	<folder name="配置" path="etc" comment="etc" embed="true">
+		<file name="template.txt" path="etc\template.txt" comment="etc\template.txt"/>
+		<file name="config.ini" path="etc\config.ini" comment="etc\config.ini"/>
 	</folder>
 </project>

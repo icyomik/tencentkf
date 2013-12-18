@@ -1,0 +1,16 @@
+
+import console;
+
+var bencandy, verbose = ...
+
+if not(verbose){ verbose=true }
+
+if(global.debugMode){
+	console.log('\n==================================================\n')
+	if(verbose){
+		console.varDump(bencandy)
+	}
+	else {
+		console.log(tostring(bencandy))
+	}
+}

@@ -1,0 +1,71 @@
+
+var init_entry,extra = ...
+global.appid := "19089" //初始APPID
+
+select(init_entry) {
+	//程序配置
+	case "inicfg" {
+		var iniFile = string.replace(io._exepath,"\.\w*$","\\config.ini")
+		if not( io.exist(iniFile) ){ //若不存在配置文件则从etc中释放
+			string.save(iniFile,string.load("\etc\config.ini"))
+		}
+		return iniFile; 
+	}
+	//生成回复配置
+	case "replycfg" {
+		var apps = extra //extra为table
+		for(pos,app in apps){
+			var tplFile=string.replace(io._exepath,"\.\w*$","\\tpl."+ app +".txt")
+			if not( io.exist(tplFile) ){ //若不存在回复模板则从etc中释放
+				string.save(tplFile,string.load("\etc\template.txt"))
+			}
+		}
+		return true; 
+	}
+	//读取回复模板
+	case "replytpl" {
+		var app = extra //extra为string
+		//essayList = string.load(tplFile)
+		//essayList = string.fromto(essayList)
+		import fsys.codepage;
+		var tplFile=string.replace(io._exepath,"\.\w*$","\\tpl."+ app +".txt")
+		var essayList = fsys.codepage.load(tplFile,"UTF-8")
+		essayList = string.replace(essayList,"\r","")
+		essayList = string.replace(essayList,"\n","")
+		essayList = string.replace(essayList,"玩家您好！","")
+		essayList = string.split(essayList,"<==========>")
+		table.insert(essayList,"",1) //加入前空行
+		table.push(essayList,"") //加入后空行
+		return essayList; //返回table
+	}
+	//编辑回复模板
+	case "edittpl" {
+		var app = extra //extra为string
+		var tplFile=string.replace(io._exepath,"\.\w*$","\\tpl."+ app +".txt")
+		import process;
+		process.execute(tplFile) //用默认程序编辑回复模板
+	}
+	//显示工单内容
+	case "viewtpl" {
+		var viewFrmTpl = /***<table border style='word-break:break-all; font-family:微软雅黑; font-size:90%' align='center'><tr><td>{#REPLACEMENT#}</td></tr></table>***/;
+		return viewFrmTpl; 
+	}
+	//POST_ARGU_TABLE
+	case "argutbl" {
+		return { iAppid=global.appid; ct=""; pg=""; iMutex=""; iScope=""; iSessionId="";
+				sBillId=""; sOpenId=""; sReply=""; sSubmitEt=""; sSubmitSt=""; sTitle=""; sType=""; };
+	}
+	//工单记录表
+	case "billtbl" {
+		return {
+			firstBill = 0; //最先提问的工单
+			ignoreList = {}; //忽略工单
+			summaryList = {}; //工单概要
+			currentBill = {}; //当前工单
+			currentBillContent = {}; //当前工单的内容
+			queryDateTime = ""; //查询工单的时间
+			replyDuplicate = ""; //上次回复的内容
+			totalBillNumber = 0; //剩余工单的数量
+		};
+	}
+}

@@ -1,0 +1,93 @@
+//客服平台接口
+namespace txkf;
+
+import win;
+import web.json;
+
+//保持在线
+/*
+keep_alive = function(param){
+	var postUrl = "http://19089.kf.ieodopen.qq.com/php/login/get";
+	var postData = "iAppid=" + param.iAppid
+	postData += "&sign=" + ""
+	
+	return send_post(postUrl, postData); 
+}
+*/
+
+//未回复工单列表
+unread_list = function(param){
+	var postUrl = "http://19089.kf.ieodopen.qq.com/php/question/qrybill";
+	var postData = "iAppid=" + param.iAppid
+	postData += "&sBillId=" + ""
+	postData += "&sOpenId=" + ""
+	postData += "&sTitle=" + ""
+	postData += "&sSubmitSt=" + param.sSubmitSt
+	postData += "&sSubmitEt=" + param.sSubmitEt
+	postData += "&sType=" + param.sType
+	postData += "&iScope=" + param.iScope
+	postData += "&pg=" + param.pg
+	postData += "&ct=" + param.ct
+	
+	return send_post(postUrl, postData); 
+}
+
+//查看单条工单具体内容
+open_bill = function(param){
+	var postUrl = "http://19089.kf.ieodopen.qq.com/php/question/get_admin_question_content";
+	var postData = "iAppid=" + param.iAppid
+	postData += "&sBillId=" + param.sBillId
+	postData += "&iSessionId=" + param.iSessionId
+	postData += "&iMutex=" + param.iMutex
+	postData += "&sOpenid=" + param.sOpenId
+	
+	return send_post(postUrl, postData); 
+}
+
+//回复单条工单
+reply_bill = function(param){
+	var postUrl = "http://19089.kf.ieodopen.qq.com/php/question/reply_bill";
+	var postData = "iAppid=" + param.iAppid
+	postData += "&sOpenid=" + param.sOpenId
+	postData += "&sBillId=" + param.sBillId
+	postData += "&sReply=" + param.sReply
+	
+	return send_post(postUrl, postData); 
+}
+
+//已经过往提问工单
+user_past = function(param){
+	var postUrl = "http://19089.kf.ieodopen.qq.com/php/question/get_user_question_list";
+	var postData = "iAppid=" + param.iAppid
+	postData += "&sOpenid=" + param.sOpenId
+	postData += "&sBillId=" + param.sBillId
+	postData += "&pg=" + param.pg
+	postData += "&ct=" + param.ct
+	
+	return send_post(postUrl, postData); 
+}
+
+//静态请求头
+var staticHeader = /***
+Referer: http://19089.kf.ieodopen.qq.com/admin/login.html
+***/
+
+//和后台交互数据
+send_post = function(postUrl, postData){
+	var postHeader = staticHeader ++ global.biscuit //加入COOKIE
+
+	var response = win.invoke( //异步交互数据，防止前端界面假死
+		function(url, data, header){
+			import inet.whttp;
+			whttp = inet.whttp()
+			var invoke_response = whttp.post( url, data, header )
+			whttp.close()
+			return invoke_response; 
+		}, postUrl, postData, postHeader
+	)
+	
+	//把JSON转为TABLE
+	//var response_table = web.json.parse( web.json.decodeString(response) )
+	var response_table = web.json.parse( response )
+	return response_table; 
+}

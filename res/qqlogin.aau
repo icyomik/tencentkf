@@ -6,34 +6,28 @@ var winform = ..win.form( exmode="none";parent=...;bottom=215;max=false;text="请
 winform.add(  )
 /*}}*/
 
-var qqlogin_flag = false; //登录标记
-
 /*登录窗口函数-开始*/
-winform.login = function(appid, hide=true){
-	winform.parent_hide = hide
-	if(winform.parent_hide){ winform.parent.hide = true } //父窗口隐藏
+winform.login = function(appid, parent_hide=false){
+	if(parent_hide){ winform.parent.hide = true } //父窗口隐藏
 
-	/*登录窗口-开始*/
-	var login_wb = web.form( winform ); //创建web窗体
+	var loginFrm = web.form( winform ); //创建web窗体
 	//var wb = web.form(winform, 0x8/*_UIFLAG_SCROLL_NO*/);
 	
 	//禁止弹出：错误对话框、右键菜单
-	login_wb.silent=true
-	login_wb.showMenu=function(x,y,id,ele){ return false; }
+	loginFrm.silent=true
+	loginFrm.showMenu=function(x,y,id,ele){ return false; }
 	
 	//认证登录网址
 	authUrl = "http://ui.ptlogin2.qq.com/cgi-bin/login?hide_title_bar=1&s_url=http://ui.ptlogin2.qq.com/"
 	authUrl = authUrl ++ "&appid=" ++ tostring(appid) //认证ID，取自原登录页面
 	
-	//弹出认证窗口
-	login_wb.go( authUrl ); winform.show(); login_wb.wait(""); //等待打开
-	/*登录窗口-结束*/
-
-	login_wb.NavigateComplete2 = function(pDisp, url) { //跳转后触发
-		if(login_wb.location != authUrl) {
-			global.biscuit = "cookie: " + inet.getCookie("http://ptlogin2.qq.com") //刷新COOKIES
-			qqlogin_flag = true; //证实已经登录
-			winform.hide = true;
+	loginFrm.go( authUrl ); loginFrm.wait(""); /*winform.show();*/ //等待打开
+	
+	//网址跳转后触发
+	loginFrm.NavigateComplete2 = function(pDisp, url) {
+		if(loginFrm.location != authUrl) { //网址变更，认证通过
+			global.biscuit = "cookie: " + inet.getCookie("http://ptlogin2.qq.com")
+			winform.hide = true
 			winform.close()
 		}
 	}
@@ -41,16 +35,10 @@ winform.login = function(appid, hide=true){
 /*登录窗口函数-结束*/
 
 winform.onClose = function(hwnd,message,wParam,lParam){
-	if(winform.parent_hide){ //父窗口显示
-		winform.parent.hide = false
-		winform.parent.redraw()
-	}
-	
-	if(qqlogin_flag){ //已经登录
-		qqlogin_flag = false;
-		winform.parent.btn_query.oncommand()
-	}
+	if(winform.parent.hide){ winform.parent.hide = false } //父窗口显示
+	winform.endModal(global.biscuit)
+	winform.parent.btn_query.oncommand() //这行在其他的程序中是没用的，这里是为了回调
 }
 
 win.loopMessage();
-return winform,login_wb;
+return winform;
