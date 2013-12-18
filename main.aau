@@ -1,0 +1,359 @@
+import win.ui;
+import web.form;
+import key;
+import console;
+import inet.url;
+import fsys.ini;
+import question; //主要函数库
+/*DSG{{*/
+var winform = ..win.form( max=false;scroll=1;bottom=487;parent=...;text="腾讯客服平台";border="dialog frame";right=631 )
+winform.add( 
+lb_essay={ top=8;bgcolor=16777215;bottom=480;right=624;left=432;vscroll=1;
+items={  };z=13;border=1;hscroll=1;edge=1;cls="listbox" };
+btn_repeat={ bottom=480;color=0;text="重复";left=216;top=456;font=LOGFONT( name='微软雅黑';h=-14 );z=10;right=264;cls="button" };
+btn_list={ bottom=32;color=0;text="打开【腾讯客服开放平台】网页";left=72;top=8;font=LOGFONT( italic=255;name='微软雅黑' );z=9;right=360;cls="button" };
+dtp_start={ bottom=480;color=0;right=96;left=8;top=456;font=LOGFONT( name='微软雅黑' );z=4;border=1;edge=1;cls="datetimepick" };
+gb_main={ bottom=360;color=0;right=424;left=8;top=72;font=LOGFONT( name='微软雅黑';h=-14 );z=1;cls="groupbox" };
+btn_reply={ bottom=480;color=0;text="回答 [CTRL+ENTER]";left=272;top=456;font=LOGFONT( name='微软雅黑';h=-14 );z=3;right=424;cls="button" };
+dtp_end={ bottom=480;color=0;right=96;left=8;top=456;font=LOGFONT( name='微软雅黑' );z=5;border=1;edge=1;cls="datetimepick" };
+btn_login={ bottom=480;color=0;text="登录";left=104;top=456;font=LOGFONT( name='微软雅黑';h=-14 );z=7;right=152;cls="button" };
+btn_query={ bottom=480;color=0;text="查询";left=160;top=456;font=LOGFONT( name='微软雅黑';h=-14 );z=6;right=208;cls="button" };
+btn_ignore={ bottom=32;text="忽略";left=360;top=8;z=11;right=424;cls="button" };
+ed_reply={ left=8;vscroll=1;color=0;right=424;border=1;multiline=1;top=368;font=LOGFONT( name='微软雅黑';h=-14 );style=1539;z=2;bottom=448;edge=1;cls="edit" };
+btn_unignore={ bottom=32;right=72;left=8;top=8;z=12;text="重置忽略";cls="button" };
+ed_intro={ border=1;bottom=64;align="center";right=424;left=8;multiline=1;top=40;font=LOGFONT( name='Consolas';h=-14 );z=8;color=0;edge=1;cls="edit" }
+)
+/*}}*/
+
+//退出程序时记录HEADER
+winform.wndproc = function(hwnd,message,wParam,lParam){
+	select(message) {
+		case 0x10/*_WM_CLOSE*/ {
+			iniFile.write("caches","biscuit",global.biscuit)
+		}
+	}
+}
+
+//显示上次回复的内容
+winform.btn_repeat.oncommand = function(id,event){
+	winform.ed_reply.text = work_order['duplicate']
+}
+
+//重置忽略列表为空
+winform.btn_unignore.oncommand = function(id,event){
+	tblmix['sBillId'] = "";
+	work_order['ignore'] = {};
+	winform.btn_ignore.text = "忽略"
+	winform.btn_query.oncommand() //重新查询工单列表
+}
+
+//添加当前工单到忽略列表
+winform.btn_ignore.oncommand = function(id,event){
+	ignore_bill_id = tostring( tblmix['sBillId'] )
+	if ( #ignore_bill_id and work_order['total_bills_number'] ){
+		work_order['ignore'][ignore_bill_id] = ignore_bill_id
+		debugFunc( work_order['ignore'] ) //DEBUG
+		winform.btn_ignore.text = "忽略[" + table.count(work_order['ignore']) + "]" //被忽略工单总数
+		winform.btn_query.oncommand() //重新查询工单列表，可过滤掉忽略的工单列表
+	}
+}
+
+//QQ登录窗口
+qqlogin = function(){
+	var child,wb = winform.loadForm("\res\qqlogin.aau", winform /*父窗口*/); 
+	child.login(518005201) //认证ID，取自原登录页面
+}
+
+//打开QQ登录窗口
+winform.btn_login.oncommand = function(id,event){
+	qqlogin()
+}
+//打开客服平台主页
+winform.btn_list.oncommand = function(id,event){
+	import process;
+	process.execute("http://" + tblmix.iAppid + ".kf.ieodopen.qq.com/admin/");
+}
+//调用『回复』功能
+winform.ed_reply.wndproc = function(hwnd,message,wParam,lParam){
+	select(message) {
+		case 0x100/*_WM_KEYDOWN*/{
+			if( key.getState("CTRL") and key.getState("ENTER") ){
+				winform.btn_reply.oncommand()
+				win.delay(1); winform.ed_reply.text = "" //加DELAY是为了能删除"ENTER"
+			}
+		}
+	}
+}
+
+//点击『查询』按钮
+winform.btn_query.oncommand = function(id,event){
+	winform.btn_query.disabled = true
+	debugFunc( query_preproccess() )
+	winform.ed_reply.setFocus()
+	winform.btn_query.disabled = false
+}
+query_preproccess = function(){
+	//清空摘要、显示框
+	winform.ed_intro.text = ""; wb.write("")
+
+	//查询工单，开始日期
+	tblmix.sSubmitSt = winform.dtp_start.time
+	tblmix.sSubmitSt.format="%Y-%m-%d"
+	tblmix.sSubmitSt = tostring( tblmix.sSubmitSt )
+	//查询工单，结束日期
+	tblmix.sSubmitEt = winform.dtp_end.time
+	tblmix.sSubmitEt.format="%Y-%m-%d"
+	tblmix.sSubmitEt = tostring( tblmix.sSubmitEt )
+
+	/*{ 取列表最后一页的最后一条工单 }*/
+	var last_page_bill_list_return = query_last_page_bill_list()
+	debugFunc( last_page_bill_list_return )
+	if( last_page_bill_list_return[1] ){
+		query_current_page_last_bill()
+	}
+
+	return {true; "OK_QUREY"};
+}
+
+//点击『回复』按钮
+winform.btn_reply.oncommand = function(id,event){
+	winform.btn_reply.disabled = true
+	debugFunc( reply_preproccess() )
+	winform.ed_reply.setFocus()
+	winform.btn_reply.disabled = false
+}
+reply_preproccess = function(){
+	if not(work_order['last']){ win.msgbox("工单为空，请先查询"); return {false; "ERR_NO_BILLS"}; }
+	
+	//回复当前工单
+	work_order['duplicate'] = winform.ed_reply.text //存入到回复副本
+	var reply_content = string.trim( work_order['duplicate'] )
+	if not( #reply_content ){
+		if not( win.msgboxTest("不回复任何内容？") ){ return {false; "ERR_NULL_REPLY"}; }
+	}
+	reply_content = string.fromto(reply_content,0/*CP_ACP*/,65001/*CP_UTF8*/)
+	if not(reply_content){ reply_content = "" } //防止回复为NULL出错
+	reply_content = inet.url.encode(reply_content)
+	tblmix.sReply = tostring(reply_content); debugFunc( tblmix.sReply ) //DEBUG
+	debugFunc( question.reply_bill(tblmix) ) //回复工单、DEBUG
+	table.pop(work_order['list']) //删除当前回复的工单
+	winform.ed_intro.text = ""; wb.write(""); winform.ed_reply.text = "" //清空摘要、显示框、回复框
+	work_order['total_bills_number'] -= 1 //工单数量减去已经回复的1条数量
+	winform.btn_list.text = "剩余约[ " + work_order['total_bills_number'] + " ]条工单" + " " + tostring(work_order['query_date_time'])
+	
+	var query_last_bill_flag = true
+	if ( #work_order['list'] === 0 ){ //当前页的工单列表为空
+		query_last_bill_flag = query_last_page_bill_list()[1] //取工单列表最后一页
+	}
+	if( query_last_bill_flag ){
+		query_current_page_last_bill() //取当前页最后一条工单
+	}
+	
+	return {true; "OK_REPLY"};
+}
+
+/*{ 取一页工单列表数据 }*/
+query_last_page_bill_list = function(){
+	//查询工单，预处理参数
+	tblmix.pg = 1; tblmix.ct = 10; tblmix.iScope = 0
+	
+	//查询工单列表，按默认的倒序方式排序
+	var bill_list_table = question.get_list(tblmix)
+	var errmsg = bill_list_table['resultinfo']['errmsg']
+	//if( #errmsg ){ win.msgbox(errmsg); return {false; "ERR:" + errmsg}; }
+	if( #errmsg ){
+		if(errmsg == "你还没有登录，请先登录"){
+			qqlogin() //QQ登录窗口
+		}
+		else {
+			win.msgbox(errmsg)
+		};
+		return {false; "ERR:" ++ errmsg};
+	}
+
+/*
+	//重新查询工单，取列表最后一页
+	tblmix.pg = bill_list_table['resultinfo']['obj']['totalpage'] //工单列表页数，用于取最后一页
+	bill_list_table = question.get_list(tblmix) //取最后一页工单列表的所有数据
+	debugFunc( bill_list_table ) //DEBUG
+	work_order['list'] = bill_list_table['resultinfo']['list'] //得到最后一页的工单列表
+*/
+
+	//查询所有页数的工单列表
+	work_order['list'] = {}; //重置未回复工单列表
+	var total_page = bill_list_table['resultinfo']['obj']['totalpage'] //工单列表页数
+	for(current_page=1;total_page;1){
+		tblmix.pg = current_page
+		bill_list_table = question.get_list(tblmix) //取某页工单列表的所有数据
+		for(bill_position,bill_summary in bill_list_table['resultinfo']['list']){
+			table.push(work_order['list'],bill_summary) //得到该页的工单列表
+		}
+	}
+	debugFunc( work_order['list'] ) //DEBUG
+	
+	//过滤掉在忽略列表里面出现的工单
+	for(ignore_key,ignore_value in work_order['ignore']){
+		for(list_position,list_summary in work_order['list']){
+			if( tonumber(ignore_value) == list_summary['sBillId'] ){
+				table.remove(work_order['list'],list_position)
+				if not( table.count(work_order['list']) ){ return {false; "ERR_IGNORE_BILL"}; }
+			}
+		}
+	}
+	
+	//完成查询，处理后续
+	winform.btn_list.setFont(italic=0); winform.btn_list.redraw() //去除按钮的字体的倾斜属性
+	work_order['total_bills_number'] = bill_list_table['resultinfo']['obj']['total'] //未回复的工单数量
+	work_order['query_date_time'] = time.now(); work_order['query_date_time'].format = "[%Y/%m/%d-%H:%M:%S]" //查询时间
+	winform.btn_list.text = "剩余约[ " + work_order['total_bills_number'] + " ]条工单" + " " + tostring(work_order['query_date_time'])
+	if (work_order['total_bills_number'] == 0){ work_order['last']=0; return {false; "ERR_NO_BILLS"}; } //没有工单了
+	
+	return {true; "OK_LAST_PAGE_LIST"};
+}
+
+/*{ 取当前页最后一条工单 }*/
+query_current_page_last_bill = function(){
+	work_order['last'] = #work_order['list'] //工单数量，即为最后一条工单的位置
+	work_order['current'] = work_order['list'][work_order.last]
+	debugFunc( work_order['current'] ) //DEBUG
+	
+	//查询预处理
+	tblmix.iMutex = 1
+	tblmix.sOpenId = work_order.current['sOpenId']
+	tblmix.sBillId = work_order.current['sBillId']
+	tblmix.iSessionId = work_order.current['iSessionId']
+	
+	//取当前工单的具体内容
+	work_order['content'] = question.view_bill(tblmix)
+	debugFunc( work_order['content'] ) //DEBUG
+	
+	//显示工单摘要
+	bill_intro = work_order.content['resultinfo']['list'][1]
+	winform.ed_intro.text = bill_intro['dtCreateTime']
+	winform.ed_intro.text += " | "
+	winform.ed_intro.text += work_order.current['sType']
+	winform.ed_intro.text += " | "
+	winform.ed_intro.text += string.replace(bill_intro['sOpenId'],"000000000000000000000000","")
+	
+	//工单标题
+	var question_sTitle = string.trim( bill_intro['sTitle'] )
+	question_sTitle = string.replace(global.displayTemplate, "<{#content#}>", question_sTitle)
+	//工单文本描述
+	var question_sArticle = string.replace(bill_intro['sDesc'],"\<br\>.*\<br\>","")
+	question_sArticle = string.trim(question_sArticle) //清除多余的空格和回车
+	question_sArticle = string.replace(global.displayTemplate, "<{#content#}>", question_sArticle)
+	//工单截图
+	var question_sPicture = string.match(bill_intro['sDesc'], "\<img.*\>")
+	if(question_sPicture === null){question_sPicture=""}; else{question_sPicture="<br>"+question_sPicture};
+	//显示工单内容
+	var question_content = question_sTitle + question_sArticle + question_sPicture
+	wb.write(question_content)
+	
+	return {true; "OK_LAST_BILL_INFO"};
+}
+
+//使用回复模板中的内容
+winform.lb_essay.wndproc = function(hwnd,message,wParam,lParam){
+	select( message ) {
+		case 0x203/*_WM_LBUTTONDBLCLK*/ {
+			if( winform.lb_essay.selText ){
+				winform.ed_reply.text = "玩家您好！" ++ winform.lb_essay.selText
+				//winform.ed_reply.text = winform.ed_reply.text ++ "玩家您好！" ++ winform.lb_essay.selText
+			}
+		}
+		case 0x206/*_WM_RBUTTONDBLCLK*/ {
+			import process;
+			process.execute( lstFile ) //右键双击打开默认程序编辑模板
+		}
+	}
+}
+
+/*八股文初始化{{*/
+lstFile=string.replace(io._exepath,"\.\w*$","\.lst")
+if not( io.exist(lstFile) ){//若不存在回复模板则从res中释放
+	string.save(lstFile,string.load("\res\essay.lst"))
+}
+//lstEssay = string.load(lstFile)
+//lstEssay = string.fromto(lstEssay)
+import fsys.codepage;
+lstEssay = fsys.codepage.load(lstFile,"UTF-8")
+lstEssay = string.replace(lstEssay,"\r","")
+lstEssay = string.replace(lstEssay,"\n","")
+lstEssay = string.replace(lstEssay,"玩家您好！","")
+lstEssay = string.split(lstEssay,"<==========>")
+winform.lb_essay.items = lstEssay
+/*}}*/
+
+/*DEBUG函数{{*/
+debugFunc = function(bencandy,verbose=true){
+	if(global.debugMode){
+		console.log('\n==================================================\n')
+		if(verbose){
+			console.varDump(bencandy)
+		}
+		else {
+			console.log(tostring(bencandy))
+		}
+	}
+}
+/*}}*/
+
+/*预处理{{*/
+iniFile=string.replace(io._exepath,"\.\w*$","\.ini")
+if not( io.exist(iniFile) ){//若不存在配置文件则从res中释放
+	string.save(iniFile,string.load("\res\config.ini"))
+}
+iniFile = fsys.ini(iniFile)
+//查询参数表
+tblmix = {
+	ct="";
+	iAppid="";
+	iMutex="";
+	iScope="";
+	iSessionId="";
+	pg="";
+	sBillId="";
+	sOpenId="";
+	sReply="";
+	sTitle="";
+	sType="";
+	sSubmitSt="";
+	sSubmitEt="";
+}
+//工单数据表
+work_order = {
+	last = 0; //最先提问的工单
+	list = {}; //工单概要列表
+	ignore = {}; //忽略工单
+	current = {}; //当前工单
+	content = {}; //当前工单的内容
+	duplicate = ""; //上次回复的内容
+	query_date_time = ""; //查询工单的时间
+	total_bills_number = 0; //剩余工单的数量
+}
+//客服平台ID
+tblmix.iAppid = iniFile.read("detail","kfAppid","19089")
+//时间范围
+var add_day = tonumber( iniFile.read("detail","dateGap","10") )
+winform.dtp_start.time = time.now().addday( add_day - (add_day*2) )
+//DEBUG模式
+global.debugMode = tonumber( iniFile.read("caches","debug","0") )
+//请求头
+global.biscuit = iniFile.read("caches","biscuit","cookie:")
+if not(global.biscuit) {global.biscuit = "cookie:"}
+//显示工单的WEB窗体
+wb = web.form( winform.gb_main )
+wb.silent = true; wb.showMenu = function(){return false;}; wb.write("")
+//显示工单的模板
+global.displayTemplate = /*****
+<table border style='word-break:break-all; font-family:微软雅黑; font-size:90%'><tr><td>
+{#content#}
+</td></tr></table>*****/
+/*}}*/
+
+//显示窗体并自动查询
+winform.show()
+winform.btn_query.oncommand()
+
+//进入消息循环
+win.loopMessage();

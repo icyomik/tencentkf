@@ -1,0 +1,11 @@
+/Publish/**/*
+/.build/**/*
+
+*.*
+!/*.aproj
+!*.aau
+!.gitignore
+!/etc/**/*
+!/mix/**/*
+!/lib/**/*
+!/res/**/*
