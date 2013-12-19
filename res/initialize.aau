@@ -31,7 +31,7 @@ select(init_entry) {
 		var tplFile=string.replace(io._exepath,"\.\w*$","\\tpl."+ app +".txt")
 		var essayList = fsys.codepage.load(tplFile,"UTF-8")
 		essayList = string.replace(essayList,"[\r\n]","")
-		essayList = string.replace(essayList,"=您好！","=")
+		essayList = string.replace(essayList,"==========您好！","==========") //不全部替换是因为防止误删，但是开头的第一个快速回复就不能加「您好！」了
 		essayList = string.split(essayList,"<==========>")
 		table.insert(essayList,"",1) //加入前空行
 		table.push(essayList,"") //加入后空行

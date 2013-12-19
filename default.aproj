@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="gb2312"?>
-<project ver="0.60" name="腾讯客服平台" libEmbed="true" icon="mix\icon.ico" CompanyName="" FileDescription="CODE BY JTWO" LegalCopyright="" ProductName="" InternalName="" FileVersion="1.0.1.33" ProductVersion="1.0.1.33" publishDir="/Publish/" ui="win" output="腾讯客服平台.exe">
+<project ver="0.60" name="腾讯客服平台" libEmbed="true" icon="mix\icon.ico" CompanyName="" FileDescription="CODE BY JTWO" LegalCopyright="" ProductName="" InternalName="" FileVersion="1.0.1.34" ProductVersion="1.0.1.34" publishDir="/Publish/" ui="win" output="腾讯客服平台.exe">
 	<file name="main.aau" path="main.aau"/>
 	<folder name="资源文件" path="res" embed="true">
 		<file name="qqlogin.aau" path="res\qqlogin.aau" comment="res\qqlogin.aau"/>
