@@ -105,8 +105,8 @@ mainForm.lb_essay.wndproc = function(hwnd,message,wParam,lParam){
 	select( message ) {
 		case 0x203/*_WM_LBUTTONDBLCLK*/ {
 			if( mainForm.lb_essay.selText ){
-				mainForm.ed_reply.text = "玩家您好！" ++ mainForm.lb_essay.selText
-				//mainForm.ed_reply.text += ("玩家您好！" ++ mainForm.lb_essay.selText)
+				mainForm.ed_reply.text = "您好！" ++ mainForm.lb_essay.selText
+				//mainForm.ed_reply.text += ("您好！" ++ mainForm.lb_essay.selText)
 			}
 		}
 		case 0x206/*_WM_RBUTTONDBLCLK*/ {

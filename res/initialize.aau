@@ -30,9 +30,8 @@ select(init_entry) {
 		import fsys.codepage;
 		var tplFile=string.replace(io._exepath,"\.\w*$","\\tpl."+ app +".txt")
 		var essayList = fsys.codepage.load(tplFile,"UTF-8")
-		essayList = string.replace(essayList,"\r","")
-		essayList = string.replace(essayList,"\n","")
-		essayList = string.replace(essayList,"玩家您好！","")
+		essayList = string.replace(essayList,"[\r\n]","")
+		essayList = string.replace(essayList,"=您好！","=")
 		essayList = string.split(essayList,"<==========>")
 		table.insert(essayList,"",1) //加入前空行
 		table.push(essayList,"") //加入后空行
